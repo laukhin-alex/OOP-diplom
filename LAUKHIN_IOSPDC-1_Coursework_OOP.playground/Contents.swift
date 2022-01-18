@@ -24,6 +24,7 @@ protocol RestaurantEmployeeProtocol {
     var age: Int { get }
 }
 
+
 protocol DishProtocol {
     var name: String { get }
     var typeOfDish: TypeOfDish { get }
@@ -42,8 +43,11 @@ protocol OrderProtocol {
 // 2. Создаем классы и структуры
 
 // 2.1 должности
+protocol cookDelegat {
+    func cookDish(dish: [Dish]) -> [Dish]
+}
 
-class Chef: RestaurantEmployeeProtocol {
+class Chef: RestaurantEmployeeProtocol, cookDelegat {
     var name: String
     var isMale: Bool
     var age: Int
@@ -55,7 +59,9 @@ class Chef: RestaurantEmployeeProtocol {
     }
 
     func cookDish(dish: [Dish]) -> [Dish] {
-        print("\(dish) is ready")
+        for dish in dish {
+            print("\n\(dish.name) is ready!")
+        }
         return dish
     }
 }
@@ -99,7 +105,9 @@ class cook: RestaurantEmployeeProtocol {
     }
 
     func cookDish(dish: [Dish]) -> [Dish] {
-        print("\(dish) is ready")
+        for dish in dish {
+            print(dish.name)
+        }
         return dish
     }
 
@@ -120,6 +128,7 @@ class Waiter: RestaurantEmployeeProtocol {
     var isMale: Bool
     var age: Int
 
+    var pullOrder: cookDelegat?
     init(name: String, isMale: Bool, age: Int) {
         self.name = name
         self.isMale = isMale
@@ -129,8 +138,9 @@ class Waiter: RestaurantEmployeeProtocol {
     func makeOrder(dish: [Dish]) -> [Dish] {
         print("I will repeat your order:")
         for dish in dish {
-            print(dish)
+            print(dish.name)
         }
+        pullOrder?.cookDish(dish: dish)
         return dish
     }
 }
@@ -163,6 +173,13 @@ enum FoodProduct: String {
     case beer = "Пиво"
 }
 
+struct FoodStorage {
+    var food: FoodProduct
+    var count: Double
+}
+
+
+
 struct Dish: DishProtocol {
     var name: String
     var typeOfDish: TypeOfDish
@@ -186,12 +203,18 @@ class Order: OrderProtocol {
 class Restaurant: RestaurantProtocol {
     var name: String
     var restaurantEmployee: [RestaurantEmployeeProtocol] = []
+    var foodStorage: [FoodStorage] = [] // For the FoodStorage
     var storeHouse: [FoodProductType] = []
     var orders: [OrderProtocol] = []
     var menu: [Dish] = []
 
     init(name: String) {
         self.name = name
+    }
+
+    func orderProductStruct(foodProduct: FoodStorage) -> [FoodStorage] {
+        foodStorage.insert(foodProduct, at: 0)
+        return foodStorage
     }
 
     func orderFoodProduct(foodProduct: [(FoodProduct, Int)]) -> [(FoodProduct, Int)] {
@@ -304,3 +327,13 @@ alDente.orders
  а мне кроме как через делегаты другое не нравиться: нету той красоты),
  а у меня еще гит висит:)
 */
+
+alDente.orderProductStruct(foodProduct: .init(food: .potato, count: 50))
+alDente.orderProductStruct(foodProduct: .init(food: .beer, count: 30))
+
+var waiter = Waiter(name: "Hesus", isMale: true, age: 30)
+var chef = Chef(name: "Pasha", isMale: true, age: 45)
+
+waiter.pullOrder = chef
+
+waiter.makeOrder(dish: [salad, beaf])
