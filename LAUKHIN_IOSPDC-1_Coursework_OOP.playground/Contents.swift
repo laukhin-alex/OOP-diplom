@@ -4,17 +4,17 @@ import UIKit
 // 1. создаем протоколы
 
 
-typealias FoodProductType = (FoodProduct, Int) //тип для продуктов и их количества
+typealias FoodProductType = [FoodProduct: Int] //тип для продуктов и их количества
 
 
 protocol RestaurantProtocol {
     var name: String { get }
     var restaurantEmployee: [RestaurantEmployeeProtocol] { get set}
-    var storeHouse: [FoodProductType] { get set}
+    var storeHouse: FoodProductType { get set}
     var menu: [Dish] { get set }
     var orders: [OrderProtocol] { get set }
 
-    func orderFoodProduct(foodProduct: [FoodProductType]) -> [FoodProductType]
+    func orderProductStruct(foodProduct: FoodStorage) -> [FoodStorage]
 
 }
 
@@ -28,7 +28,7 @@ protocol RestaurantEmployeeProtocol {
 protocol DishProtocol {
     var name: String { get }
     var typeOfDish: TypeOfDish { get }
-    var ingredients: [FoodProductType] { get set }
+    var ingredients: FoodProductType { get set }
     var cookingTime: Int { get set }
     var price: Double { get set }
 }
@@ -43,11 +43,28 @@ protocol OrderProtocol {
 // 2. Создаем классы и структуры
 
 // 2.1 должности
-protocol cookDelegat {
+protocol CookDelegat {
     func cookDish(dish: [Dish]) -> [Dish]
 }
 
-class Chef: RestaurantEmployeeProtocol, cookDelegat {
+protocol ChefCook {
+    func cookDish(dish: [Dish]) -> [Dish]
+    func cookHotDish(dish: [Dish]) -> [Dish]
+    func cookColdDish(dish: [Dish]) -> [Dish]
+}
+
+protocol SuChefCook {
+    func cookDish(dish: [Dish]) -> [Dish]
+    func cookHotDish(dish: [Dish]) -> [Dish]
+}
+
+protocol ColdDishCook {
+    func cookColdDish(dish: [Dish]) -> [Dish]
+}
+
+class Chef: RestaurantEmployeeProtocol, ChefCook, CookDelegat {
+
+
     var name: String
     var isMale: Bool
     var age: Int
@@ -64,9 +81,31 @@ class Chef: RestaurantEmployeeProtocol, cookDelegat {
         }
         return dish
     }
+
+    func cookHotDish(dish: [Dish]) -> [Dish] {
+        for dish in dish {
+            if dish.typeOfDish == .hotMeal {
+            print("\n\(dish.name) is ready!")
+            } else {
+                print("I can't cook this \(dish)")
+            }
+        }
+        return dish
+    }
+
+    func cookColdDish(dish: [Dish]) -> [Dish] {
+        for dish in dish {
+            if dish.typeOfDish == .salad {
+            print("\n\(dish.name) is ready!")
+            } else {
+                print("I can't cook this \(dish)")
+            }
+        }
+        return dish
+    }
 }
 
-class SuChef: RestaurantEmployeeProtocol {
+class SuChef: RestaurantEmployeeProtocol, SuChefCook {
     var name: String
     var isMale: Bool
     var age: Int
@@ -93,7 +132,7 @@ class SuChef: RestaurantEmployeeProtocol {
     }
 }
 
-class cook: RestaurantEmployeeProtocol {
+class ColdCook: RestaurantEmployeeProtocol, ColdDishCook {
     var name: String
     var isMale: Bool
     var age: Int
@@ -111,7 +150,7 @@ class cook: RestaurantEmployeeProtocol {
         return dish
     }
 
-    func cookSaladDish(dish: [Dish]) -> [Dish] {
+    func cookColdDish(dish: [Dish]) -> [Dish] {
         for dish in dish {
             if dish.typeOfDish == TypeOfDish.salad {
                 print("\(dish) is ready")
@@ -128,7 +167,7 @@ class Waiter: RestaurantEmployeeProtocol {
     var isMale: Bool
     var age: Int
 
-    var pullOrder: cookDelegat?
+    var pullOrder: CookDelegat?
     init(name: String, isMale: Bool, age: Int) {
         self.name = name
         self.isMale = isMale
@@ -183,7 +222,7 @@ struct FoodStorage {
 struct Dish: DishProtocol {
     var name: String
     var typeOfDish: TypeOfDish
-    var ingredients: [(FoodProduct, Int)]
+    var ingredients: FoodProductType
     var cookingTime: Int
     var price: Double
 }
@@ -204,7 +243,7 @@ class Restaurant: RestaurantProtocol {
     var name: String
     var restaurantEmployee: [RestaurantEmployeeProtocol] = []
     var foodStorage: [FoodStorage] = [] // For the FoodStorage
-    var storeHouse: [FoodProductType] = []
+    var storeHouse: FoodProductType = [:]
     var orders: [OrderProtocol] = []
     var menu: [Dish] = []
 
@@ -217,8 +256,8 @@ class Restaurant: RestaurantProtocol {
         return foodStorage
     }
 
-    func orderFoodProduct(foodProduct: [(FoodProduct, Int)]) -> [(FoodProduct, Int)] {
-        storeHouse.insert(contentsOf: foodProduct, at: 0)
+    func orderFoodProduct(foodProduct: FoodProductType) -> FoodProductType {
+        storeHouse.updateValue(foodProduct.values, forKey: foodProduct.keys)
         return storeHouse
     }
 
@@ -241,42 +280,42 @@ class Restaurant: RestaurantProtocol {
 
 var salad: Dish = Dish(name: "Salad",
                        typeOfDish: .salad,
-                       ingredients: [(.egg, 2),
-                                     (.oil, 1),
-                                     (.peper, 3),
-                                     (.saladLeaves, 2)],
+                       ingredients: [.egg: 2,
+                                     .oil: 1,
+                                     .peper: 3,
+                                     .saladLeaves: 2],
                        cookingTime: 10,
                        price: 300.00)
 
 
 var beaf: Dish = Dish(name: "Beaf",
-                      typeOfDish: .hotMeal,
-                      ingredients: [(.beaf, 1),
-                                     (.oil, 1),
-                                     (.peper, 3)],
-                      cookingTime: 30,
-                      price: 500.00)
+                       typeOfDish: .hotMeal,
+                       ingredients: [.beaf: 1,
+                                     .oil: 1,
+                                     .peper: 3],
+                       cookingTime: 30,
+                       price: 500.00)
 
 var beer: Dish = Dish(name: "Kozel",
                       typeOfDish: .drink,
-                      ingredients: [(.beer, 1)],
+                      ingredients: [.beer: 1],
                       cookingTime: 0,
                       price: 300.00)
 
 var chicken: Dish = Dish(name: "Chicken",
                          typeOfDish: .hotMeal,
-                         ingredients: [(.chicken, 1),
-                                     (.oil, 1),
-                                     (.peper, 3)],
+                       ingredients: [.chicken: 1,
+                                        .oil: 1,
+                                       .peper: 3],
                          cookingTime: 20,
                          price: 350.00)
 
 var frenchFries: Dish = Dish(name: "Potato Fry",
                              typeOfDish: .garnish,
-                             ingredients: [(.potato, 3),
-                                           (.oil, 5),
-                                           (.peper, 3),
-                                           (.salt, 20)],
+                             ingredients: [.potato: 3,
+                                           .oil: 5,
+                                           .peper: 3,
+                                           .salt: 20],
                              cookingTime: 10,
                              price: 150.00)
 
@@ -286,21 +325,21 @@ var alDente = Restaurant(name: "Al Dente")
 
 
 // бахнули продукты в хранилище
-alDente.orderFoodProduct(foodProduct: [(.egg, 50),
-                                       (.salt, 10),
-                                       (.chicken, 20),
-                                       (.beaf, 30),
-                                       (.peper, 1000),
-                                       (.onion, 200),
-                                       (.bread, 30),
-                                       (.oil, 50),
-                                       (.sauce, 50),
-                                       (.saladLeaves, 200),
-                                       (.potato, 20),
-                                       (.rice, 30),
-                                       (.spice, 55),
-                                       (.water, 100),
-                                       (.beer, 200)])
+alDente.orderFoodProduct(foodProduct: [.egg: 50,
+                                       .salt: 10,
+                                       .chicken: 20,
+                                       .beaf: 30,
+                                       .peper: 1000,
+                                       .onion: 200,
+                                       .bread: 30,
+                                       .oil: 50,
+                                       .sauce: 50,
+                                       .saladLeaves: 200,
+                                       .potato: 20,
+                                       .rice: 30,
+                                       .spice: 55,
+                                       .water: 100,
+                                       .beer: 200])
 
 alDente.addingDishToMenu(dish: frenchFries)
 alDente.addingDishToMenu(dish: beer)
