@@ -256,8 +256,8 @@ class Restaurant: RestaurantProtocol {
         return foodStorage
     }
 
-    func orderFoodProduct(foodProduct: FoodProductType) -> FoodProductType {
-        storeHouse.updateValue(foodProduct.values, forKey: foodProduct.keys)
+    func orderFoodProduct(foodProduct: FoodProductType.Key, quantity: Int) -> FoodProductType {
+        storeHouse.updateValue(((storeHouse[foodProduct] ?? 0) + quantity), forKey: foodProduct)
         return storeHouse
     }
 
@@ -325,21 +325,24 @@ var alDente = Restaurant(name: "Al Dente")
 
 
 // бахнули продукты в хранилище
-alDente.orderFoodProduct(foodProduct: [.egg: 50,
-                                       .salt: 10,
-                                       .chicken: 20,
-                                       .beaf: 30,
-                                       .peper: 1000,
-                                       .onion: 200,
-                                       .bread: 30,
-                                       .oil: 50,
-                                       .sauce: 50,
-                                       .saladLeaves: 200,
-                                       .potato: 20,
-                                       .rice: 30,
-                                       .spice: 55,
-                                       .water: 100,
-                                       .beer: 200])
+alDente.storeHouse = [.egg: 50,
+                      .salt: 10,
+                      .chicken: 20,
+                      .beaf: 30,
+                      .peper: 1000,
+                      .onion: 200,
+                      .bread: 30,
+                      .oil: 50,
+                      .sauce: 50,
+                      .saladLeaves: 200,
+                      .potato: 20,
+                      .rice: 30,
+                      .spice: 55,
+                      .water: 100,
+                      .beer: 200]
+
+alDente.orderFoodProduct(foodProduct: .egg, quantity: 70)
+alDente.storeHouse
 
 alDente.addingDishToMenu(dish: frenchFries)
 alDente.addingDishToMenu(dish: beer)
