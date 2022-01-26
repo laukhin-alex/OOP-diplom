@@ -47,6 +47,10 @@ protocol CookDelegat {
     func cookDish(dish: [Dish]) -> [Dish]
 }
 
+protocol TakeProductDelegat {
+    func takeProduct(foodProduct: FoodProductType.Key, quantity: Int) -> FoodProductType
+}
+
 protocol ChefCook {
     func cookDish(dish: [Dish]) -> [Dish]
     func cookHotDish(dish: [Dish]) -> [Dish]
@@ -63,11 +67,10 @@ protocol ColdDishCook {
 }
 
 class Chef: RestaurantEmployeeProtocol, ChefCook, CookDelegat {
-
-
     var name: String
     var isMale: Bool
     var age: Int
+    var takeProduct: TakeProductDelegat?
 
     init(name: String, isMale: Bool, age: Int) {
         self.name = name
@@ -76,8 +79,38 @@ class Chef: RestaurantEmployeeProtocol, ChefCook, CookDelegat {
     }
 
     func cookDish(dish: [Dish]) -> [Dish] {
+        print("\nHey! Waiter!\n")
         for dish in dish {
-            print("\n\(dish.name) is ready!")
+            if dish.typeOfDish == .salad {
+                takeProduct?.takeProduct(foodProduct: .egg, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .oil, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .saladLeaves, quantity: 3)
+                takeProduct?.takeProduct(foodProduct: .peper, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .salt, quantity: 1)
+                print("\(dish.name) is ready!")
+            } else if dish.typeOfDish == .hotMeal {
+                takeProduct?.takeProduct(foodProduct: .beaf, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .oil, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .peper, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .salt, quantity: 1)
+                print("\(dish.name) is ready!")
+            } else if dish.typeOfDish == .soup {
+                takeProduct?.takeProduct(foodProduct: .water, quantity: 2)
+                takeProduct?.takeProduct(foodProduct: .oil, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .potato, quantity: 2)
+                takeProduct?.takeProduct(foodProduct: .chicken, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .peper, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .salt, quantity: 1)
+                print("\(dish.name) is ready!")
+            } else if dish.typeOfDish == .garnish {
+                takeProduct?.takeProduct(foodProduct: .rice, quantity: 2)
+                takeProduct?.takeProduct(foodProduct: .oil, quantity: 1)
+                takeProduct?.takeProduct(foodProduct: .salt, quantity: 1)
+                print("\(dish.name) is ready!")
+            } else if dish.typeOfDish == .drink {
+                takeProduct?.takeProduct(foodProduct: .beer, quantity: 1)
+                print("\(dish.name) is ready!")
+            }
         }
         return dish
     }
@@ -85,7 +118,7 @@ class Chef: RestaurantEmployeeProtocol, ChefCook, CookDelegat {
     func cookHotDish(dish: [Dish]) -> [Dish] {
         for dish in dish {
             if dish.typeOfDish == .hotMeal {
-            print("\n\(dish.name) is ready!")
+                print("\n\(dish.name) is ready!")
             } else {
                 print("I can't cook this \(dish)")
             }
@@ -96,7 +129,7 @@ class Chef: RestaurantEmployeeProtocol, ChefCook, CookDelegat {
     func cookColdDish(dish: [Dish]) -> [Dish] {
         for dish in dish {
             if dish.typeOfDish == .salad {
-            print("\n\(dish.name) is ready!")
+                print("\n\(dish.name) is ready!")
             } else {
                 print("I can't cook this \(dish)")
             }
@@ -239,7 +272,7 @@ class Order: OrderProtocol {
 
 //3. создаем хранилища, они входят в класс ресторана
 
-class Restaurant: RestaurantProtocol {
+class Restaurant: RestaurantProtocol, TakeProductDelegat {
     var name: String
     var restaurantEmployee: [RestaurantEmployeeProtocol] = []
     var foodStorage: [FoodStorage] = [] // For the FoodStorage
@@ -258,6 +291,12 @@ class Restaurant: RestaurantProtocol {
 
     func orderFoodProduct(foodProduct: FoodProductType.Key, quantity: Int) -> FoodProductType {
         storeHouse.updateValue(((storeHouse[foodProduct] ?? 0) + quantity), forKey: foodProduct)
+        return storeHouse
+    }
+
+
+    func takeProduct(foodProduct: FoodProductType.Key, quantity: Int) -> FoodProductType {
+        storeHouse.updateValue(((storeHouse[foodProduct] ?? 0) - quantity), forKey: foodProduct)
         return storeHouse
     }
 
@@ -289,12 +328,12 @@ var salad: Dish = Dish(name: "Salad",
 
 
 var beaf: Dish = Dish(name: "Beaf",
-                       typeOfDish: .hotMeal,
-                       ingredients: [.beaf: 1,
-                                     .oil: 1,
-                                     .peper: 3],
-                       cookingTime: 30,
-                       price: 500.00)
+                      typeOfDish: .hotMeal,
+                      ingredients: [.beaf: 1,
+                                    .oil: 1,
+                                    .peper: 3],
+                      cookingTime: 30,
+                      price: 500.00)
 
 var beer: Dish = Dish(name: "Kozel",
                       typeOfDish: .drink,
@@ -304,8 +343,8 @@ var beer: Dish = Dish(name: "Kozel",
 
 var chicken: Dish = Dish(name: "Chicken",
                          typeOfDish: .hotMeal,
-                       ingredients: [.chicken: 1,
-                                        .oil: 1,
+                         ingredients: [.chicken: 1,
+                                       .oil: 1,
                                        .peper: 3],
                          cookingTime: 20,
                          price: 350.00)
@@ -326,7 +365,7 @@ var alDente = Restaurant(name: "Al Dente")
 
 // бахнули продукты в хранилище
 alDente.storeHouse = [.egg: 50,
-                      .salt: 10,
+                      .salt: 1000,
                       .chicken: 20,
                       .beaf: 30,
                       .peper: 1000,
@@ -368,7 +407,7 @@ alDente.orders
  Если все правильно, есть ли смысл делать логику? В принципе, задача на логику со звездочкой,
  а мне кроме как через делегаты другое не нравиться: нету той красоты),
  а у меня еще гит висит:)
-*/
+ */
 
 alDente.orderProductStruct(foodProduct: .init(food: .potato, count: 50))
 alDente.orderProductStruct(foodProduct: .init(food: .beer, count: 30))
@@ -377,5 +416,6 @@ var waiter = Waiter(name: "Hesus", isMale: true, age: 30)
 var chef = Chef(name: "Pasha", isMale: true, age: 45)
 
 waiter.pullOrder = chef
-
-waiter.makeOrder(dish: [salad, beaf])
+chef.takeProduct = alDente
+waiter.makeOrder(dish: [salad, beer, beaf, frenchFries])
+alDente.storeHouse
